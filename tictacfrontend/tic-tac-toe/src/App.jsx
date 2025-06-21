@@ -68,7 +68,9 @@ function App() {
   }
 
   if (gameState?.game_status == "match_found") {
-    return <MatchFound animate={true} player={player} gameData={gameState}/>
+    player.gameId = gameState.gameId;
+
+    return <MatchFound animate={true} player={player} gameData={gameState} />;
   }
 
   return (

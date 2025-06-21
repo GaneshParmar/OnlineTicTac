@@ -117,6 +117,10 @@ class Main {
                     this.gameManager.rematchReject(ws.id, message.data);
                 }
 
+                if(message.type === "exitGame"){
+                    this.gameManager.exitGame(ws.id, message.data);
+                }
+
             });
         });
 

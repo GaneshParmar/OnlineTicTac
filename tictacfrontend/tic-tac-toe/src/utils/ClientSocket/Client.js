@@ -1,5 +1,5 @@
 import { updateGameState } from '../../store/slice/gameSlice';
-import { handleError } from '../handleError';
+import { handleError, handleInfo } from '../handleError';
 
 
 export class WebSocketCLient {
@@ -36,6 +36,16 @@ export class WebSocketCLient {
 
             if(message.type == "move-made") {
                 this.player.notifyMoveMade(message.data);
+            }
+            // 'rematchReq', data: { gameId, info: "Rematch requested from the opponent", rematchBy: rematchBy } 
+            if(message.type == "rematchReq") {
+                handleInfo(message.data.info + " : " + message.data.rematchBy);
+                this.player.notifyRematchReq(message.data);
+            }
+
+            if(message.type == "exit_game") {
+                handleInfo("Exiting the current game.");
+                this.player.exitGame(message.data);
             }
 
         };

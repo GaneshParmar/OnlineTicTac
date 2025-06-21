@@ -362,13 +362,6 @@ export class GameManager {
 
     rematch(ws_id, { gameId, rematchTo, rematchBy }) {
 
-        if (this.games[gameId].game_state == "finished") {
-            console.error(`Game with ID ${gameId} does not exist.`);
-            io.to(ws_id).emit('error', {
-                message: `Game with ID ${gameId} is already finished. Start new game!`
-            })
-            return;
-        }
 
         const io = socket.socket;
         // io.to(gameId).emit('move-made', {
@@ -383,6 +376,20 @@ export class GameManager {
             })
             return;
         }
+        if (this.games[gameId].game_state == "finished") {
+            console.error(`Game with ID ${gameId} does not exist.`);
+            io.to(ws_id).emit('error', {
+                message: `Game with ID ${gameId} is already finished. Start new game!`
+            })
+            return;
+        }
+        if (this.games[gameId].game_state == "rematch_req") {
+            console.error(`Game with ID ${gameId} is in rematch req mode.`);
+            io.to(ws_id).emit('error', {
+                message: `Rematch req is present. Please wait till your opponent accept or you accept.`
+            })
+            return;
+        }
 
         const game = this.games[gameId];
         if (!game.positon || game.position == '') {
@@ -393,18 +400,12 @@ export class GameManager {
 
         this.notifySocketsOfPlayers(player_to_notify.name, { type: 'rematchReq', data: { gameId, info: "Rematch requested from the opponent", rematchBy: rematchBy } });
 
+        this.games[gameId].game_state = "rematch_req";
     }
 
     rematchAccept(ws_id, { gameId }) {
 
-        if (this.games[gameId].game_state == "finished") {
-            console.error(`Game with ID ${gameId} does not exist.`);
-            io.to(ws_id).emit('error', {
-                message: `Game with ID ${gameId} is already finished. Start new game!`
-            })
-            return;
-        }
-
+      
         const io = socket.socket;
         // io.to(gameId).emit('move-made', {
         //     gameId,
@@ -415,6 +416,13 @@ export class GameManager {
             console.error(`Game with ID ${gameId} does not exist.`);
             io.to(ws_id).emit('error', {
                 message: `Game with ID ${gameId} does not exist.`
+            })
+            return;
+        }
+        if (this.games[gameId].game_state == "finished") {
+            console.error(`Game with ID ${gameId} does not exist.`);
+            io.to(ws_id).emit('error', {
+                message: `Game with ID ${gameId} is already finished. Start new game!`
             })
             return;
         }

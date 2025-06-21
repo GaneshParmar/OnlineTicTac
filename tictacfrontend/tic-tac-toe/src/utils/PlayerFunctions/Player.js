@@ -1,12 +1,14 @@
 import { updateGameState } from "../../store/slice/gameSlice";
-import { handleError } from "../handleError";
+import { handleError , askToast} from "../handleError";
 
 export class Player {
-    constructor(client, name, symbol, moveMade = ()=>{}) {
+    constructor(client, name, symbol, moveMade = ()=>{}, gameId = null) {
         this.client = client;
         this.name = name; // Player's name
         this.symbol = symbol; // Player's symbol (X or O)
-        this.moveMade = moveMade
+        this.moveMade = moveMade;
+        this.currentGameId = gameId;
+
     }
 
     getData(){
@@ -15,6 +17,7 @@ export class Player {
             symbol : this.symbol
         }
     }
+
     PlayGame() {
         try {
             this.client.emitMessage({
@@ -48,5 +51,39 @@ export class Player {
     // opponent move should have
     notifyMoveMade(opponent_move){
         this.moveMade(opponent_move);
+    }
+
+    // request for rematch
+
+    reqRematch(rematchTo){
+        this.client.emitMessage({
+            type : "rematchReq",
+            data : {
+                gameId : this.currentGameId,
+                rematchTo, 
+                rematchBy : this.name
+            }
+        });
+
+    }
+
+
+    // exit the current game
+
+    exitCurrentGame(){
+        this.client.emitMessage({
+            type : "exitGame",
+            data : {
+                gameId : this.currentGameId
+            }
+        });
+    }
+
+    notifyRematchReq(rematchReqData){
+        // this.client.dispatch(updateGameState({
+        //     rematchRequests : [rematchReqData]
+        // }));
+
+
     }
 }
