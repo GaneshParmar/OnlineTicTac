@@ -9,6 +9,7 @@ export const handleError = (error) => {
         console.error("An error occurred:", error);
         toast(error, { theme: "failure" });
     } else {
+        
         console.error("An unknown error occurred:", error);
         toast("An unknown error occurred", { type: 'error' });
     }

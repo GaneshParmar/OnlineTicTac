@@ -24,8 +24,8 @@ class Main {
 
             ws.close = () => {
                 console.log("Client disconnected : ", ws.id);
-                this.gameManager.removeUserFromQueue(ws.id);
-                this.gameManager.removePlayerSocketFromPlaying(ws.id);
+                this.gameManager.removePlayerSocketsFromQueue([ws.id]);
+                this.gameManager.removePlayerSocketFromPlaying([ws.id]);
                 this.playersConnectedToGame = this.playersConnectedToGame.filter(playerId => playerId !== ws.id);
                 this.notifyAll();
             }
@@ -49,13 +49,22 @@ class Main {
                         return;
                     }
                     const playerData = this.gameManager.addUserData(message.data, ws.id);
-                    ws.send(JSON.stringify({
-                        type : "user_added",
-                        data : playerData
-                    }))
+                    
+                    if(!playerData){
+                        ws.send(JSON.stringify({
+                            type : "user_added_error",
+                            data : "Password may be entered is incorrect!"
+                        }))
+                    }else{
+                        ws.send(JSON.stringify({
+                            type : "user_added",
+                            data : playerData
+                        }))
+    
+                        if(playerData?.isPlaying){
+                            this.gameManager.reconnectToGame(playerData);
+                        }
 
-                    if(playerData.isPlaying){
-                        this.gameManager.reconnectToGame(playerData);
                     }
                 }
 
@@ -66,6 +75,12 @@ class Main {
                             type: 'error',
                             data: 'You are already playing a game!'
                         }))
+
+                        const {name : username} = message.data;
+
+                        console.log(username);
+
+                        this.gameManager.rejoinGame(ws.id, username);
                         return;
                     }
                     if (!this.gameManager.checkIfUserInQueue(message.data)) {

@@ -45,7 +45,11 @@ export class WebSocketCLient {
 
             if(message.type == "exit_game") {
                 handleInfo("Exiting the current game.");
-                this.player.exitGame(message.data);
+                this.player.notifyExitGame(message.data);
+            }
+
+            if(message.type == "user_added_error"){
+                this.dispatch(updateGameState({error : message.data}));
             }
 
         };

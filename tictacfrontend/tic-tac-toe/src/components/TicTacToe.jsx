@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { FaUserAlt } from "react-icons/fa";
+import timerVideo from "../assets/timer.mp4"; // Adjust the path as needed
 
 function stringToBoard(pos) {
   // Split the string by commas to get an array
@@ -62,9 +63,11 @@ function WinnerDetail({ winnerSymbol, me, opponent }) {
                 className="text-xl font-bold tracking-tight"
                 id="page-action.heading"
               >
-                {winnerSymbol == opponent.symbol
-                  ? "Opponent won :("
-                  : "You won :)"}
+                {winnerSymbol != "D"
+                  ? !(winnerSymbol == opponent.symbol)
+                    ? "Opponent won :("
+                    : "You won :)"
+                  : "Match Drawn"}
               </h2>
 
               <p className="text-gray-500">Do you want a rematch?</p>
@@ -107,10 +110,21 @@ function WinnerDetail({ winnerSymbol, me, opponent }) {
   );
 }
 
+function Timer() {
+  return (
+    <video width="60" height="60" loop autoPlay muted>
+      <source src={timerVideo} type="video/mp4" />
+      Your browser does not support the video tag.
+    </video>
+  );
+}
+
 function TicTacToeBoard({ player, gameData }) {
   const [currentSymbol, setCurrentSymbol] = useState(gameData?.turn);
   const [winnerSymbol, setWinnerSymbol] = useState("");
   const [winnerCondition, setWinnerCondition] = useState("");
+  // const [movesPlayed, setMovesPlayed] = useState(0);
+  const [movesPlayed, setMovesPlayed] = useState(0);
 
   const [isMyTurn, setIsMyTurn] = useState(currentSymbol == gameData?.symbol);
 
@@ -150,8 +164,15 @@ function TicTacToeBoard({ player, gameData }) {
       ) {
         setWinnerSymbol(symbol);
         setWinnerCondition(condition.join("-"));
+        setMovesPlayed(0);
+
         return;
       }
+    }
+
+    if (movesPlayed >= 9) {
+      setWinnerSymbol("D");
+      setMovesPlayed(0);
     }
   };
 
@@ -174,7 +195,8 @@ function TicTacToeBoard({ player, gameData }) {
     //   updatedBoard[2]?.join(",");
     player.makeMove({ gameId: gameData?.gameId, newposition, turn: next_turn });
     setBoard(updatedBoard);
-    checkWinner(updatedBoard);
+    setMovesPlayed((prev) => prev + 1);
+    // checkWinner(updatedBoard);
     setCurrentSymbol(next_turn);
   };
 
@@ -182,9 +204,18 @@ function TicTacToeBoard({ player, gameData }) {
     const updatedBoard = stringToBoard(newposition);
     setBoard(updatedBoard);
     setCurrentSymbol(turn);
-    checkWinner(updatedBoard);
+    setMovesPlayed((prev) => prev + 1);
+    // checkWinner(updatedBoard);
+    if (newposition == "---------") {
+      restartGame();
+    }
   };
 
+
+  useEffect(()=>{
+    checkWinner(board);
+  },[movesPlayed, board]);
+  
   const restartGame = () => {
     setBoard([
       ["", "", ""],
@@ -193,7 +224,7 @@ function TicTacToeBoard({ player, gameData }) {
     ]);
     setWinnerSymbol("");
     setWinnerCondition("");
-    setCurrentSymbol("O");
+    // setCurrentSymbol("O");
   };
 
   return (
@@ -209,9 +240,9 @@ function TicTacToeBoard({ player, gameData }) {
         {!winnerSymbol &&
           (isMyTurn ? "Your turn" : "Waiting for opponent to play")}
       </h6>
-
       <div className="text-white flex items-center gap-2 text-right w-full">
         <FaUserAlt size={24} /> {gameData?.opponent?.name}
+        {!isMyTurn && <Timer />}
       </div>
       <div className="grid grid-cols-3 gap-2">
         {board.map((row, r) =>
@@ -230,6 +261,7 @@ function TicTacToeBoard({ player, gameData }) {
 
       <div className="flex items-center gap-2 text-green-400 text-right w-full">
         <FaUserAlt size={24} /> {player?.name} (Me)
+        {isMyTurn && <Timer />}
       </div>
 
       {/* <button

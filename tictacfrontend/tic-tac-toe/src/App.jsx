@@ -24,13 +24,20 @@ function App() {
       setUpPlayer();
       return;
     }
-    const symbol = prompt("Enter your symbol (X or O): ");
-    if (!symbol || (symbol !== "X" && symbol !== "O")) {
-      alert("Please enter a valid symbol (X or O) to play the game.");
+    // const symbol = prompt("Enter your symbol (X or O): ");
+    // if (!symbol || (symbol !== "X" && symbol !== "O")) {
+    //   alert("Please enter a valid symbol (X or O) to play the game.");
+    //   setUpPlayer();
+    //   return;
+    // }
+    // }
+    const password = prompt("Enter your password: ");
+    if (!password || password.trim() == "") {
+      alert("Please enter a valid password.");
       setUpPlayer();
       return;
     }
-    setPlayer(new Player(client.current, player_name, symbol));
+    setPlayer(new Player(client.current, player_name, password));
   };
 
   useEffect(() => {
@@ -68,9 +75,21 @@ function App() {
   }
 
   if (gameState?.game_status == "match_found") {
-    player.gameId = gameState.gameId;
+    player.currentGameId = gameState.gameId;
 
     return <MatchFound animate={true} player={player} gameData={gameState} />;
+  }
+
+  if (gameState?.error) {
+    if(player){
+      setPlayer(null);
+    }
+    return (
+      <>
+        <p>{gameState.error}</p>
+        <button onClick={setUpPlayer}>Retry</button>
+      </>
+    );
   }
 
   return (
