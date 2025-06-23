@@ -285,13 +285,13 @@ pairUsers() {
             // crete room
             this.createRoom(gameId, player_1, player_2);
 
-            addSocketToQueueIfFail = this.removePlayerSocketsFromQueue([...player_1?.sockets, ...player_2?.sockets]);
+            addSocketToQueueIfFail = this.removePlayerSocketsFromQueue([...this.users[player_1?.name]?.sockets, ...this.users[player_2?.name]?.sockets]);
             // [...player_1?.sockets, ...player_2?.sockets].forEach((ws_id) => {
             //     // this.removePlayerSocketFromPlaying(ws_id);
             // })
 
             this.playersplaying.push(player_1, player_2);
-            this.socketInPlaying.push(...(player_1?.sockets || []), ...(player_2.sockets || []));
+            this.socketInPlaying.push(...(this.users[player_1?.name]?.sockets || []), ...(this.users[player_2?.name]?.sockets || []));
 
             this.users[player_1?.data?.name].isPlaying = true;
             this.users[player_2?.data?.name].isPlaying = true;
@@ -306,7 +306,7 @@ pairUsers() {
         // console.log("Player 1 is : ", player_1)
         // console.log("Player 2 is : ", player_2)
 
-        [...(player_1?.sockets || []), ...(player_2?.sockets || [])].forEach((ws_id) => {
+        [...(this.users[player_1?.name]?.sockets || []), ...(this.users[player_2?.name]?.sockets || [])].forEach((ws_id) => {
             socket.getSocketById(ws_id).send(JSON.stringify({
                 type: 'error',
                 data: `Error occurred while pairing users: ${error.message}`
@@ -379,7 +379,7 @@ createRoom(gameId, player_1, player_2) {
     }
     this.games[gameId].turn = "O";
 
-    player_1?.sockets.forEach(ws => {
+    player_1?.sockets.forEach((ws, i) => {
         try {
             const Player1 = socket.getSocketById(ws);
             Player1.send(JSON.stringify({
@@ -395,21 +395,25 @@ createRoom(gameId, player_1, player_2) {
 
         } catch (e) {
             // means the socket is not valid
-
+            this.users[player_1?.name].sockets.splice(i,1);
         }
     });
 
-    player_2?.sockets?.forEach(ws => {
-        const Player2 = socket.getSocketById(ws);
-        Player2.send(JSON.stringify({
-            type: 'match-found',
-            data: {
-                gameId,
-                symbol: "O",
-                opponent: { ...player_1?.data, symbol: "O" },
-                turn: "O"
-            }
-        }));
+    player_2?.sockets?.forEach((ws,i) => {
+        try {
+            const Player2 = socket.getSocketById(ws);
+            Player2.send(JSON.stringify({
+                type: 'match-found',
+                data: {
+                    gameId,
+                    symbol: "O",
+                    opponent: { ...player_1?.data, symbol: "O" },
+                    turn: "O"
+                }
+            }));
+        } catch(e) {
+            this.users[player_2?.name].sockets.splice(i,1);
+        }
     })
 }
 

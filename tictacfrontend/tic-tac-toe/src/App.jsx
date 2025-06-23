@@ -55,7 +55,7 @@ function App() {
       try {
         if (!client.current) {
           client.current = new WebSocketCLient(
-            "ws://localhost:8081",
+            "wss://onlinetictac-1.onrender.com",
             dispatch,
             player.getData(),
             player
