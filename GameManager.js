@@ -207,13 +207,24 @@ export class GameManager {
         if (!this.users?.[username]?.isPlaying) {
             this.notifySocket(ws_id, {
                 type: "error",
-                info: "Can't rejoin game player not playing any game."
-            })
+                data: "Can't rejoin game player not playing any game."
+            });
+            return;
         }
 
         const last_game_id = this.users[username].games[this.users[username].games.length - 1];
 
         const game = this.games[last_game_id];
+
+        if(!game){
+            this.notifySocket(ws_id, {
+                type: "error",
+                data: "Can't rejoin game player not having any previous game."
+            });
+            return;
+
+        }
+
         const { player1, player2 } = game.players;
 
         // this.games[gameId].turn = "O";

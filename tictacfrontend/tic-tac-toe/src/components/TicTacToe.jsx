@@ -110,7 +110,7 @@ function WinnerDetail({ winnerSymbol, me, opponent }) {
   );
 }
 
-function Timer() {
+export function Timer() {
   return (
     <video width="60" height="60" loop autoPlay muted>
       <source src={timerVideo} type="video/mp4" />

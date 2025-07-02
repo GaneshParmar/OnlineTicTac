@@ -3,21 +3,28 @@ import { handleError, handleInfo } from '../handleError';
 
 
 export class WebSocketCLient {
-    constructor(url, dispatch, player_data,player) {
+    constructor(url, dispatch, player_data, player, onOpenCallback) {
         this.websocket = new WebSocket(url);
-        this.init();
         this.dispatch = dispatch;
         this.connectionClosed = false;
         this.player_data = player_data;
         this.player = player;
+        this.onOpenCallback = onOpenCallback;
+        this.init();
     }
+    
 
     init() {
         this.websocket.onopen = () => {
             console.log("WebSocket connection established.");
             this.connectionClosed = false;
-            this.emitMessage({type : "add_user", data : this.player_data})
+            this.emitMessage({ type: "add_user", data: this.player_data });
+        
+            if (this.onOpenCallback) {
+                this.onOpenCallback(); // Notify React that connection is ready
+            }
         };
+        
 
         this.websocket.onmessage = (event) => {
             const message = JSON.parse(event.data);

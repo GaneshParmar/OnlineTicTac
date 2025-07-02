@@ -8,12 +8,17 @@ import "react-simple-toasts/dist/style.css";
 import "react-simple-toasts/dist/theme/dark.css";
 import FindingOpponent from "./components/FindingOpponent";
 import MatchFound from "./components/MatchFound";
+import { Timer } from "./components/TicTacToe";
 
 function App() {
   const dispatch = useDispatch();
 
   const gameState = useSelector((state) => state.game.gameState);
 
+  const [countdown, setCountdown] = useState(60); // 60 seconds
+
+  const [connectionTimedOut, setConnectionTimedOut] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState("idle");
   const [player, setPlayer] = useState(null);
   const client = useRef(null);
 
@@ -50,25 +55,112 @@ function App() {
     }
   }, []);
 
+  // useEffect(() => {
+  //   if (player) {
+  //     try {
+  //       if (!client.current) {
+  //         client.current = new WebSocketCLient(
+  //           "wss://onlinetictac-1.onrender.com",
+  //           dispatch,
+  //           player.getData(),
+  //           player
+  //         );
+
+  //         player.client = client.current;
+  //       }
+  //       toast("Connected to the server");
+  //     } catch (e) {
+  //       console.error("Error while connecting to server : ", e.message);
+  //     }
+  //   }
+  // }, [player]);
+  useEffect(() => {
+    let interval;
+    let timeout;
+  
+    if (connectionStatus === "connecting") {
+      setCountdown(60);
+      setConnectionTimedOut(false);
+  
+      interval = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+  
+      // Timeout after 60 seconds
+      timeout = setTimeout(() => {
+        setConnectionStatus("error");
+        setConnectionTimedOut(true);
+      }, 60000);
+    }
+  
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [connectionStatus]);
+  
+  
+
   useEffect(() => {
     if (player) {
       try {
         if (!client.current) {
+          setConnectionStatus("connecting");
+
           client.current = new WebSocketCLient(
             "wss://onlinetictac-1.onrender.com",
             dispatch,
             player.getData(),
-            player
+            player,
+            () => {
+              toast("Connected to the server");
+              setConnectionStatus("connected");
+            }
           );
+          
 
           player.client = client.current;
         }
-        toast("Connected to the server");
       } catch (e) {
         console.error("Error while connecting to server : ", e.message);
+        setConnectionStatus("error");
       }
     }
   }, [player]);
+
+  if (connectionStatus === "connecting") {
+    return (
+      <div className="App">
+        <h2>Connecting to server...</h2>
+        <p>This may take a few seconds as we are running on a free server (max wait time - 1 min).</p>
+        <strong> <Timer /> Time left: {countdown}s</strong>
+      </div>
+    );
+  }
+
+  if (connectionStatus === "error") {
+    return (
+      <div className="App">
+        <h2>Connection Failed</h2>
+        {connectionTimedOut ? (
+          <p>Server is taking too long to respond. Please try again later or reload.</p>
+        ) : (
+          <p>An unexpected error occurred while trying to connect.</p>
+        )}
+        <button onClick={() => {
+          setConnectionStatus("idle");
+          setPlayer(null);
+          setUpPlayer();
+        }}>Retry</button>
+      </div>
+    );
+  }
 
   if (gameState?.game_status == "finding_opponent") {
     return <FindingOpponent player={player} gamedata={gameState} />;
@@ -81,7 +173,7 @@ function App() {
   }
 
   if (gameState?.error) {
-    if(player){
+    if (player) {
       setPlayer(null);
     }
     return (
@@ -108,8 +200,6 @@ function App() {
         >
           Play game
         </button>
-
-        {JSON.stringify(gameState)}
       </div>
     </div>
   );
